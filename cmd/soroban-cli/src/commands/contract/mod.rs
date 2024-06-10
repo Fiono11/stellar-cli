@@ -12,6 +12,7 @@ pub mod invoke;
 pub mod optimize;
 pub mod read;
 pub mod restore;
+pub mod threshold_sign;
 
 use crate::commands::global;
 

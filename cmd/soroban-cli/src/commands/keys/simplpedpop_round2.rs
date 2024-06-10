@@ -72,8 +72,13 @@ impl Cmd {
             .unwrap();
 
         let signing_share = simplpedpop.1;
-        let signing_share_json =
-            serde_json::to_string_pretty(&signing_share.to_bytes().to_vec()).unwrap();
+
+        let signing_share_json = serde_json::to_string_pretty(
+            &PrivateKey::from_payload(&signing_share.secret_key)
+                .unwrap()
+                .to_string(),
+        )
+        .unwrap();
 
         let mut signing_share_file = File::create(file_path.join("signing_share.json")).unwrap();
 
