@@ -6,6 +6,7 @@ use std::{
 use olaf::{simplpedpop::AllMessage, SigningKeypair};
 use rand::rngs::OsRng;
 use serde_json::from_str;
+use stellar_strkey::ed25519::PrivateKey;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -29,10 +30,10 @@ impl Cmd {
 
         let encoded_string: String = serde_json::from_str(&secret_key_string).unwrap();
 
-        let s = base64::decode(encoded_string).unwrap();
+        let sk = PrivateKey::from_string(&encoded_string).unwrap();
 
         let mut secret_key_bytes = [0; 32];
-        secret_key_bytes.copy_from_slice(&s);
+        secret_key_bytes.copy_from_slice(&sk.0);
 
         let mut keypair = SigningKeypair::from_secret_key(&secret_key_bytes);
 
@@ -50,9 +51,13 @@ impl Cmd {
         let output_json =
             serde_json::to_string_pretty(&output_round1.spp_output.to_bytes()).unwrap();
 
-        let threshold_public_key_json = serde_json::to_string_pretty(&base64::encode(
-            output_round1.spp_output.threshold_public_key.0.to_bytes(),
-        ))
+        let threshold_public_key_json = serde_json::to_string_pretty(
+            &stellar_strkey::ed25519::PublicKey::from_payload(
+                &output_round1.spp_output.threshold_public_key.0.to_bytes(),
+            )
+            .unwrap()
+            .to_string(),
+        )
         .unwrap();
 
         let mut output_file = File::create(file_path.join("spp_output.json")).unwrap();

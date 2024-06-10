@@ -33,8 +33,6 @@ impl Cmd {
 
         let encoded_string: String = serde_json::from_str(&secret_key_string).unwrap();
 
-        //let s = base64::decode(encoded_string).unwrap();
-
         let sk = PrivateKey::from_string(&encoded_string).unwrap();
 
         let mut secret_key_bytes = [0; 32];
