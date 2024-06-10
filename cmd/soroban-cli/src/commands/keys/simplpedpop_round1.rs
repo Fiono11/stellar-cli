@@ -7,6 +7,7 @@ use ed25519_dalek::VerifyingKey;
 use olaf::{simplpedpop::AllMessage, SigningKeypair};
 use rand::rngs::OsRng;
 use serde_json::from_str;
+use stellar_strkey::ed25519::PrivateKey;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -32,10 +33,12 @@ impl Cmd {
 
         let encoded_string: String = serde_json::from_str(&secret_key_string).unwrap();
 
-        let s = bs58::decode(encoded_string).into_vec().unwrap();
+        //let s = base64::decode(encoded_string).unwrap();
+
+        let sk = PrivateKey::from_string(&encoded_string).unwrap();
 
         let mut secret_key_bytes = [0; 32];
-        secret_key_bytes.copy_from_slice(&s);
+        secret_key_bytes.copy_from_slice(&sk.0);
 
         let mut keypair = SigningKeypair::from_secret_key(&secret_key_bytes);
 
@@ -46,9 +49,9 @@ impl Cmd {
         let recipients: Vec<VerifyingKey> = encoded_strings
             .iter()
             .map(|encoded_string| {
-                let s = bs58::decode(encoded_string).into_vec().unwrap();
+                let pk = stellar_strkey::ed25519::PublicKey::from_string(&encoded_string).unwrap();
                 let mut recipient = [0; 32];
-                recipient.copy_from_slice(&s);
+                recipient.copy_from_slice(&pk.0);
                 VerifyingKey::from_bytes(&recipient).unwrap()
             })
             .collect();
