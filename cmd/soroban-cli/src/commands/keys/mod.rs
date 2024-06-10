@@ -7,6 +7,7 @@ pub mod generate;
 pub mod ls;
 pub mod rm;
 pub mod show;
+pub mod simplpedpop_round1;
 
 #[derive(Debug, Parser)]
 pub enum Cmd {
@@ -24,6 +25,8 @@ pub enum Cmd {
     Rm(rm::Cmd),
     /// Given an identity return its private key
     Show(show::Cmd),
+    /// Round 1 of the SimplPedPoP protocol
+    SimplpedpopRound1(simplpedpop_round1::Cmd),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -33,11 +36,13 @@ pub enum Error {
 
     #[error(transparent)]
     Address(#[from] address::Error),
+
     #[error(transparent)]
     Fund(#[from] fund::Error),
 
     #[error(transparent)]
     Generate(#[from] generate::Error),
+
     #[error(transparent)]
     Rm(#[from] rm::Error),
     #[error(transparent)]
@@ -45,6 +50,9 @@ pub enum Error {
 
     #[error(transparent)]
     Show(#[from] show::Error),
+
+    #[error(transparent)]
+    SimplpedpopRound1(#[from] simplpedpop_round1::Error),
 }
 
 impl Cmd {
@@ -57,6 +65,7 @@ impl Cmd {
             Cmd::Ls(cmd) => cmd.run()?,
             Cmd::Rm(cmd) => cmd.run()?,
             Cmd::Show(cmd) => cmd.run()?,
+            Cmd::SimplpedpopRound1(cmd) => cmd.run()?,
         };
         Ok(())
     }
