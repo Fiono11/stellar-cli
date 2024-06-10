@@ -8,6 +8,7 @@ pub mod ls;
 pub mod rm;
 pub mod show;
 pub mod simplpedpop_round1;
+pub mod simplpedpop_round2;
 
 #[derive(Debug, Parser)]
 pub enum Cmd {
@@ -27,6 +28,8 @@ pub enum Cmd {
     Show(show::Cmd),
     /// Round 1 of the SimplPedPoP protocol
     SimplpedpopRound1(simplpedpop_round1::Cmd),
+    /// Round 2 of the SimplPedPoP protocol
+    SimplpedpopRound2(simplpedpop_round2::Cmd),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -53,6 +56,9 @@ pub enum Error {
 
     #[error(transparent)]
     SimplpedpopRound1(#[from] simplpedpop_round1::Error),
+
+    #[error(transparent)]
+    SimplpedpopRound2(#[from] simplpedpop_round2::Error),
 }
 
 impl Cmd {
@@ -66,6 +72,7 @@ impl Cmd {
             Cmd::Rm(cmd) => cmd.run()?,
             Cmd::Show(cmd) => cmd.run()?,
             Cmd::SimplpedpopRound1(cmd) => cmd.run()?,
+            Cmd::SimplpedpopRound2(cmd) => cmd.run()?,
         };
         Ok(())
     }

@@ -3,7 +3,8 @@ use std::{
     io::Write,
 };
 
-use olaf::SigningKeypair;
+use ed25519_dalek::VerifyingKey;
+use olaf::{simplpedpop::AllMessage, SigningKeypair};
 use rand::rngs::OsRng;
 use serde_json::from_str;
 
@@ -16,6 +17,8 @@ pub enum Error {
 #[derive(Debug, clap::Parser, Clone)]
 #[group(skip)]
 pub struct Cmd {
+    /// The threshold for the SimplPedPoP protocol
+    threshold: u16,
     /// The folder that contains the files for the round 1 of the FROST protocol
     pub files: String,
 }
@@ -24,37 +27,45 @@ impl Cmd {
     pub fn run(&self) -> Result<(), Error> {
         let file_path: std::path::PathBuf = self.files.clone().into();
 
-        let signing_share_string =
-            fs::read_to_string(file_path.join("signing_share.json")).unwrap();
+        let secret_key_string =
+            fs::read_to_string(file_path.join("contributor_secret_key.json")).unwrap();
 
-        let signing_share_vec: Vec<u8> = from_str(&signing_share_string).unwrap();
+        let encoded_string: String = serde_json::from_str(&secret_key_string).unwrap();
 
-        let mut signing_share_bytes = [0; 64];
-        signing_share_bytes.copy_from_slice(&signing_share_vec);
+        let s = bs58::decode(encoded_string).into_vec().unwrap();
 
-        let signing_share = SigningKeypair::from_bytes(&signing_share_bytes).unwrap();
+        let mut secret_key_bytes = [0; 32];
+        secret_key_bytes.copy_from_slice(&s);
 
-        let (signing_nonces, signing_commitments) = signing_share.commit(&mut OsRng);
+        let mut keypair = SigningKeypair::from_secret_key(&secret_key_bytes);
 
-        let signing_nonces_json =
-            serde_json::to_string_pretty(&signing_nonces.to_bytes().to_vec()).unwrap();
+        let recipients_string = fs::read_to_string(file_path.join("recipients.json")).unwrap();
 
-        let mut signing_nonces_file = File::create(file_path.join("signing_nonces.json")).unwrap();
+        let encoded_strings: Vec<String> = serde_json::from_str(&recipients_string).unwrap();
 
-        signing_nonces_file
-            .write_all(signing_nonces_json.as_bytes())
+        let recipients: Vec<VerifyingKey> = encoded_strings
+            .iter()
+            .map(|encoded_string| {
+                let s = bs58::decode(encoded_string).into_vec().unwrap();
+                let mut recipient = [0; 32];
+                recipient.copy_from_slice(&s);
+                VerifyingKey::from_bytes(&recipient).unwrap()
+            })
+            .collect();
+
+        let all_message: AllMessage = keypair
+            .simplpedpop_contribute_all(self.threshold, recipients)
             .unwrap();
 
-        let signing_commitments_vec = vec![signing_commitments.to_bytes().to_vec()];
+        let all_message_bytes: Vec<u8> = all_message.to_bytes();
+        let all_message_vec: Vec<Vec<u8>> = vec![all_message_bytes];
 
-        let signing_commitments_json =
-            serde_json::to_string_pretty(&signing_commitments_vec).unwrap();
+        let all_message_json = serde_json::to_string_pretty(&all_message_vec).unwrap();
 
-        let mut signing_commitments_file =
-            File::create(file_path.join("signing_commitments.json")).unwrap();
+        let mut all_message_file = File::create(file_path.join("all_messages.json")).unwrap();
 
-        signing_commitments_file
-            .write_all(signing_commitments_json.as_bytes())
+        all_message_file
+            .write_all(all_message_json.as_bytes())
             .unwrap();
 
         Ok(())
