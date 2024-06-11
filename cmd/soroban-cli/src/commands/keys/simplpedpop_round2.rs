@@ -1,10 +1,14 @@
+use gix::bstr::ByteSlice;
 use olaf::{simplpedpop::AllMessage, SigningKeypair};
 use serde_json::from_str;
 use std::{
     fs::{self, File},
     io::Write,
+    str::FromStr,
 };
 use stellar_strkey::ed25519::PrivateKey;
+
+use crate::commands::config::secret::Secret;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -70,13 +74,8 @@ impl Cmd {
             .unwrap();
 
         let signing_share = simplpedpop.1;
-
-        let signing_share_json = serde_json::to_string_pretty(
-            &PrivateKey::from_payload(&signing_share.secret_key)
-                .unwrap()
-                .to_string(),
-        )
-        .unwrap();
+        let signing_share_json =
+            serde_json::to_string_pretty(&signing_share.to_bytes().to_vec()).unwrap();
 
         let mut signing_share_file = File::create(file_path.join("signing_share.json")).unwrap();
 

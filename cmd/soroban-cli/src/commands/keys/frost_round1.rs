@@ -6,6 +6,7 @@ use std::{
 
 use olaf::SigningKeypair;
 use rand::rngs::OsRng;
+use serde_json::from_str;
 use stellar_strkey::ed25519::PrivateKey;
 
 #[derive(thiserror::Error, Debug)]
@@ -28,10 +29,10 @@ impl Cmd {
         let signing_share_string =
             fs::read_to_string(file_path.join("signing_share.json")).unwrap();
 
-        let signing_share = PrivateKey::from_str(&signing_share_string).unwrap();
+        let signing_share_vec: Vec<u8> = from_str(&signing_share_string).unwrap();
 
         let mut signing_share_bytes = [0; 64];
-        signing_share_bytes.copy_from_slice(&signing_share.0);
+        signing_share_bytes.copy_from_slice(&signing_share_vec);
 
         let signing_share = SigningKeypair::from_bytes(&signing_share_bytes).unwrap();
 
