@@ -1,11 +1,9 @@
+use olaf::{simplpedpop::AllMessage, SigningKeypair};
+use serde_json::from_str;
 use std::{
     fs::{self, File},
     io::Write,
 };
-
-use olaf::{simplpedpop::AllMessage, SigningKeypair};
-use rand::rngs::OsRng;
-use serde_json::from_str;
 use stellar_strkey::ed25519::PrivateKey;
 
 #[derive(thiserror::Error, Debug)]
@@ -17,7 +15,7 @@ pub enum Error {
 #[derive(Debug, clap::Parser, Clone)]
 #[group(skip)]
 pub struct Cmd {
-    /// The folder that contains the files for the round 2 of the FROST protocol
+    /// The folder that contains the files for the round 2 of the SimplPedPoP protocol
     pub files: String,
 }
 

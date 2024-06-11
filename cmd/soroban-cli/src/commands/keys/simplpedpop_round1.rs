@@ -1,12 +1,9 @@
+use ed25519_dalek::VerifyingKey;
+use olaf::{simplpedpop::AllMessage, SigningKeypair};
 use std::{
     fs::{self, File},
     io::Write,
 };
-
-use ed25519_dalek::VerifyingKey;
-use olaf::{simplpedpop::AllMessage, SigningKeypair};
-use rand::rngs::OsRng;
-use serde_json::from_str;
 use stellar_strkey::ed25519::PrivateKey;
 
 #[derive(thiserror::Error, Debug)]
@@ -20,7 +17,7 @@ pub enum Error {
 pub struct Cmd {
     /// The threshold for the SimplPedPoP protocol
     threshold: u16,
-    /// The folder that contains the files for the round 1 of the FROST protocol
+    /// The folder that contains the files for the round 1 of the SimplPedPoP protocol
     pub files: String,
 }
 

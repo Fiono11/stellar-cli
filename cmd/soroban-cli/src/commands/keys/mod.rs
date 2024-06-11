@@ -2,6 +2,9 @@ use clap::Parser;
 
 pub mod add;
 pub mod address;
+pub mod frost_aggregate;
+pub mod frost_round1;
+pub mod frost_round2;
 pub mod fund;
 pub mod generate;
 pub mod ls;
@@ -30,6 +33,12 @@ pub enum Cmd {
     SimplpedpopRound1(simplpedpop_round1::Cmd),
     /// Round 2 of the SimplPedPoP protocol
     SimplpedpopRound2(simplpedpop_round2::Cmd),
+    /// Round 1 of the FROST protocol
+    FrostRound1(frost_round1::Cmd),
+    /// Round 2 of the FROST protocol
+    FrostRound2(frost_round2::Cmd),
+    /// Aggregate round of the FROST protocol
+    FrostAggregate(frost_aggregate::Cmd),
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -59,6 +68,15 @@ pub enum Error {
 
     #[error(transparent)]
     SimplpedpopRound2(#[from] simplpedpop_round2::Error),
+
+    #[error(transparent)]
+    FrostRound1(#[from] frost_round1::Error),
+
+    #[error(transparent)]
+    FrostRound2(#[from] frost_round2::Error),
+
+    #[error(transparent)]
+    FrostAggregate(#[from] frost_aggregate::Error),
 }
 
 impl Cmd {
@@ -73,6 +91,9 @@ impl Cmd {
             Cmd::Show(cmd) => cmd.run()?,
             Cmd::SimplpedpopRound1(cmd) => cmd.run()?,
             Cmd::SimplpedpopRound2(cmd) => cmd.run()?,
+            Cmd::FrostRound1(cmd) => cmd.run()?,
+            Cmd::FrostRound2(cmd) => cmd.run().await?,
+            Cmd::FrostAggregate(cmd) => cmd.run().await?,
         };
         Ok(())
     }

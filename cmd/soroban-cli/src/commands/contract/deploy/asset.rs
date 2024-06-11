@@ -135,7 +135,7 @@ impl NetworkRunnable for Cmd {
     }
 }
 
-fn build_wrap_token_tx(
+pub(crate) fn build_wrap_token_tx(
     asset: &Asset,
     contract_id: &Hash,
     sequence: i64,
