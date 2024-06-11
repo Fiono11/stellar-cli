@@ -62,6 +62,11 @@ impl Cmd {
         )
         .unwrap();
 
+        /*let threshold_public_key = output_round1.spp_output.threshold_public_key;
+
+        let threshold_public_key_json =
+        serde_json::to_string_pretty(&threshold_public_key.0.to_bytes()).unwrap();*/
+
         let mut output_file = File::create(file_path.join("spp_output.json")).unwrap();
 
         output_file.write_all(output_json.as_bytes()).unwrap();

@@ -1,16 +1,17 @@
-use ed25519_dalek::SigningKey;
 use olaf::{
     frost::{SigningCommitments, SigningNonces},
     simplpedpop::SPPOutput,
     SigningKeypair,
 };
 use serde_json::from_str;
-use sha2::digest::generic_array::sequence;
+use sha2::{Digest, Sha256};
+use soroban_env_host::xdr::Hash;
 use soroban_rpc::Client;
 use soroban_sdk::xdr::{
     ContractExecutable, ContractIdPreimage, CreateContractArgs, HostFunction, InvokeHostFunctionOp,
-    Memo, MuxedAccount, Operation, OperationBody, Preconditions, SequenceNumber, Transaction,
-    TransactionExt, Uint256, VecM,
+    Limits, Memo, MuxedAccount, Operation, OperationBody, Preconditions, SequenceNumber,
+    Transaction, TransactionExt, TransactionSignaturePayload,
+    TransactionSignaturePayloadTaggedTransaction, Uint256, VecM, WriteXdr,
 };
 use std::{
     fs::{self, File},
@@ -18,12 +19,8 @@ use std::{
     path::PathBuf,
     str::FromStr,
 };
-use stellar_strkey::ed25519::PrivateKey;
 
-use crate::{
-    commands::{config, contract::deploy::asset::build_wrap_token_tx},
-    utils::{contract_id_hash_from_asset, parsing::parse_asset},
-};
+use crate::{commands::config, fee::add_padding_to_instructions, utils::parsing::parse_asset};
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -102,7 +99,8 @@ impl Cmd {
         //let account_details = client.get_account(&public_strkey).await.unwrap();
         //let sequence: i64 = account_details.seq_num.into();
         let network_passphrase = &network.network_passphrase;
-        let contract_id = contract_id_hash_from_asset(&asset, network_passphrase).unwrap();
+        //let contract_id = contract_id_hash_from_asset(&asset, network_passphrase).unwrap();
+
         let op = Operation {
             source_account: None,
             body: OperationBody::InvokeHostFunction(InvokeHostFunctionOp {
@@ -130,12 +128,23 @@ impl Cmd {
         //if self.fee.build_only {
         //return Ok(TxnResult::Txn(tx));
         //}
-        let txn = client.create_assembled_transaction(&tx).await.unwrap();
+        //let txn1 = client.create_assembled_transaction(&tx).await.unwrap();
         //let txn = self.fee.apply_to_assembled_txn(txn);
+        //let txn = add_padding_to_instructions(txn1);
+
+        let signature_payload = TransactionSignaturePayload {
+            network_id: Hash(Sha256::digest(network_passphrase).into()),
+            tagged_transaction: TransactionSignaturePayloadTaggedTransaction::Tx(tx.clone()),
+        };
+        let mut hash = [0; 32];
+        hash = Sha256::digest(signature_payload.to_xdr(Limits::none()).unwrap()).into();
+
+        println!("hash: {:?}", hash);
 
         let signing_package = signing_share
             .sign(
-                &txn.hash(network_passphrase).unwrap(),
+                //&txn.hash(network_passphrase).unwrap(),
+                &hash,
                 &spp_output,
                 &signing_commitments,
                 &signing_nonces,

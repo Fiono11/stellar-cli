@@ -43,6 +43,7 @@ impl Cmd {
 
         let signing_packages_string =
             fs::read_to_string(file_path.join("signing_packages.json")).unwrap();
+
         let signing_packages_bytes: Vec<Vec<u8>> = from_str(&signing_packages_string).unwrap();
 
         let signing_packages: Vec<SigningPackage> = signing_packages_bytes
@@ -52,7 +53,7 @@ impl Cmd {
 
         let tx_signature = aggregate(&signing_packages).unwrap();
 
-        let config = &self.config;
+        /*let config = &self.config;
         // Parse asset
         let asset = parse_asset(&self.asset).unwrap();
 
@@ -111,7 +112,7 @@ impl Cmd {
             signatures: vec![decorated_signature].try_into().unwrap(),
         });
 
-        client.send_transaction(&tx).await.unwrap();
+        client.send_transaction(&tx).await.unwrap();*/
 
         Ok(())
     }
