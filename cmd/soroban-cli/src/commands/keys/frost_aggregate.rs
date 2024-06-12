@@ -7,9 +7,9 @@ use serde_json::from_str;
 use sha2::digest::generic_array::sequence;
 use soroban_rpc::Client;
 use soroban_sdk::xdr::{
-    ContractExecutable, ContractIdPreimage, CreateContractArgs, HostFunction, InvokeHostFunctionOp,
-    Memo, MuxedAccount, Operation, OperationBody, Preconditions, SequenceNumber, Transaction,
-    TransactionExt, Uint256, VecM,
+    Asset, ContractExecutable, ContractIdPreimage, CreateContractArgs, HostFunction,
+    InvokeHostFunctionOp, Memo, MuxedAccount, Operation, OperationBody, PaymentOp, Preconditions,
+    SequenceNumber, Transaction, TransactionExt, Uint256, VecM,
 };
 use soroban_sdk::xdr::{
     DecoratedSignature, Signature, SignatureHint, TransactionEnvelope, TransactionV1Envelope,
@@ -53,7 +53,7 @@ impl Cmd {
 
         let tx_signature = aggregate(&signing_packages).unwrap();
 
-        /*let config = &self.config;
+        let config = &self.config;
         // Parse asset
         let asset = parse_asset(&self.asset).unwrap();
 
@@ -64,31 +64,30 @@ impl Cmd {
         //.await?;
         //let key = config.key_pair().unwrap();
 
+        let pk = stellar_strkey::ed25519::PublicKey::from_string(&config.source_account).unwrap();
+
         // Get the account sequence number
         //let public_strkey =
         //stellar_strkey::ed25519::PublicKey(key.verifying_key().to_bytes()).to_string();
         // TODO: use symbols for the method names (both here and in serve)
-        //let account_details = client.get_account(&public_strkey).await.unwrap();
-        //let sequence: i64 = account_details.seq_num.into();
+        let account_details = client.get_account(&pk.to_string()).await.unwrap();
+        let sequence: i64 = account_details.seq_num.into();
+
         let network_passphrase = &network.network_passphrase;
-        let contract_id = contract_id_hash_from_asset(&asset, network_passphrase).unwrap();
+
         let op = Operation {
             source_account: None,
-            body: OperationBody::InvokeHostFunction(InvokeHostFunctionOp {
-                host_function: HostFunction::CreateContract(CreateContractArgs {
-                    contract_id_preimage: ContractIdPreimage::Asset(asset.clone()),
-                    executable: ContractExecutable::StellarAsset,
-                }),
-                auth: VecM::default(),
+            body: OperationBody::Payment(PaymentOp {
+                destination: MuxedAccount::Ed25519(Uint256(pk.0)),
+                asset: Asset::Native,
+                amount: 100,
             }),
         };
 
-        let pk = stellar_strkey::ed25519::PublicKey::from_string(&config.source_account).unwrap();
-
         let tx = Transaction {
             source_account: MuxedAccount::Ed25519(Uint256(pk.0)),
-            fee: 1,
-            seq_num: SequenceNumber(0),
+            fee: 100,
+            seq_num: SequenceNumber(sequence + 1),
             cond: Preconditions::None,
             memo: Memo::None,
             operations: vec![op].try_into().unwrap(),
@@ -99,7 +98,7 @@ impl Cmd {
         //if self.fee.build_only {
         //return Ok(TxnResult::Txn(tx));
         //}
-        let txn = client.create_assembled_transaction(&tx).await.unwrap();
+        //let txn = client.create_assembled_transaction(&tx).await.unwrap();
         //let txn = self.fee.apply_to_assembled_txn(txn);
 
         let decorated_signature = DecoratedSignature {
@@ -108,11 +107,11 @@ impl Cmd {
         };
 
         let tx = TransactionEnvelope::Tx(TransactionV1Envelope {
-            tx: txn.transaction().clone(),
+            tx: tx.clone(),
             signatures: vec![decorated_signature].try_into().unwrap(),
         });
 
-        client.send_transaction(&tx).await.unwrap();*/
+        client.send_transaction(&tx).await.unwrap();
 
         Ok(())
     }
